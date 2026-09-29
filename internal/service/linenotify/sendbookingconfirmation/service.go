@@ -29,8 +29,8 @@ func New(cfg config.Config, messenger portsendbookingconfirmation.Messenger) Ser
 }
 
 // Execute mirrors sendBookingConfirmation() in line-notify.ts. Failures are
-// returned to the caller to log, never surfaced to the customer — callers
-// should fire this in a goroutine, same as the original fire-and-forget call.
+// returned to the caller to log, never surfaced to the customer. Callers run it
+// synchronously before responding, since Cloud Run throttles CPU afterwards.
 func (s *service) Execute(booking domain.Booking) error {
 	if s.cfg.LineChannelToken == "" {
 		return nil
