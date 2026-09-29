@@ -5,15 +5,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 )
 
 type lineAPIMessenger struct {
 	channelToken string
+	client       *http.Client
 }
 
 // NewLineAPIMessenger adapts LINE's push-message endpoint to the Messenger port.
 func NewLineAPIMessenger(channelToken string) Messenger {
-	return &lineAPIMessenger{channelToken: channelToken}
+	return &lineAPIMessenger{
+		channelToken: channelToken,
+		client:       &http.Client{Timeout: 5 * time.Second},
+	}
 }
 
 func (m *lineAPIMessenger) Push(to, message string) error {
@@ -35,7 +40,7 @@ func (m *lineAPIMessenger) Push(to, message string) error {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+m.channelToken)
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := m.client.Do(req)
 	if err != nil {
 		return err
 	}

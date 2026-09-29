@@ -61,12 +61,12 @@ func (h *Handler) CreateBooking(c *gin.Context) {
 		return
 	}
 
-	// Fire-and-forget notification, matching the original .catch(console.error) behavior.
-	go func() {
-		if err := h.LineNotifySendBookingConfirmation.Execute(output.Booking); err != nil {
-			log.Printf("line notify failed for booking %s: %v", output.Booking.ID, err)
-		}
-	}()
+	// Sent before responding (not in a goroutine): Cloud Run throttles CPU once the
+	// response is written, so background work may never finish. A failure is only
+	// logged, matching the original .catch(console.error) behavior.
+	if err := h.LineNotifySendBookingConfirmation.Execute(output.Booking); err != nil {
+		log.Printf("line notify failed for booking %s: %v", output.Booking.ID, err)
+	}
 
 	c.JSON(http.StatusCreated, gin.H{"booking": output.Booking, "price": output.Price})
 }

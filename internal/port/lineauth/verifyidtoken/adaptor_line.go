@@ -4,17 +4,20 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
+	"time"
 )
 
-type lineAPIVerifier struct{}
+type lineAPIVerifier struct {
+	client *http.Client
+}
 
 // NewLineAPIVerifier adapts LINE's OAuth verify endpoint to the Verifier port.
 func NewLineAPIVerifier() Verifier {
-	return &lineAPIVerifier{}
+	return &lineAPIVerifier{client: &http.Client{Timeout: 5 * time.Second}}
 }
 
 func (v *lineAPIVerifier) Verify(idToken, channelID string) (*VerifyResult, error) {
-	resp, err := http.PostForm("https://api.line.me/oauth2/v2.1/verify", url.Values{
+	resp, err := v.client.PostForm("https://api.line.me/oauth2/v2.1/verify", url.Values{
 		"id_token":  {idToken},
 		"client_id": {channelID},
 	})
