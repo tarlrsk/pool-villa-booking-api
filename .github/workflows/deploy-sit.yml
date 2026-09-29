@@ -67,7 +67,10 @@ jobs:
             --set-env-vars "^|^GIN_MODE=release|LINE_AUTH_BYPASS=false|LINE_LIFF_ID=${{ vars.LINE_LIFF_ID }}|CORS_ALLOWED_ORIGINS=${{ vars.CORS_ALLOWED_ORIGINS }}" \
             --set-secrets "DATABASE_URL=${NAME}-database-url:latest,ADMIN_JWT_SECRET=${NAME}-admin-jwt-secret:latest,LINE_CHANNEL_ACCESS_TOKEN=${NAME}-line-channel-access-token:latest,LINE_CHANNEL_SECRET=${NAME}-line-channel-secret:latest"
 
+      # Not /healthz: Cloud Run's frontend reserves some paths ending in "z" and
+      # answers them with its own 404 before the request reaches the app.
+      # pricing-data is public and also exercises the database connection.
       - name: Smoke test
         run: |
           URL="$(gcloud run services describe "$SERVICE" --region "$REGION" --format='value(status.url)')"
-          curl -fsS --retry 3 "$URL/healthz"
+          curl -fsS --retry 3 -o /dev/null "$URL/api/pricing-data"
